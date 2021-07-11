@@ -1,4 +1,3 @@
-import logging
 from typing import Optional
 
 import h5py
@@ -13,9 +12,6 @@ from .single_digit_mnist import SingleDigitMNIST
 from .utils import BaseDataset, DatasetGenerator
 
 
-logging.basicConfig(level=logging.INFO)
-
-
 class MultiDigitMNIST(BaseDataModule):
     def __init__(
         self,
@@ -25,7 +21,7 @@ class MultiDigitMNIST(BaseDataModule):
         min_length: int = 1,
         max_length: int = 5,
         min_overlap: float = 0.0,
-        max_overlap: float = 0.4,
+        max_overlap: float = 0.5,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -50,8 +46,6 @@ class MultiDigitMNIST(BaseDataModule):
                     interpolation=InterpolationMode.BILINEAR,
                     fill=0,
                 ),
-                transforms.ColorJitter(brightness=(0.5, 1)),
-                transforms.RandomAdjustSharpness(sharpness_factor=3, p=0.3),
                 transforms.ToTensor(),
             ]),
             "val/test": transforms.ToTensor(),
@@ -78,7 +72,7 @@ class MultiDigitMNIST(BaseDataModule):
         seed_everything(1234)
         with h5py.File(self.dataset_filename, "w") as f:
             for split in ("train", "val", "test"):
-                logging.info(f"Preparing {split} dataset...")
+                print(f"Preparing {split} dataset...")
                 image_generator = DatasetGenerator(
                     self.single_digit_mnist.dataset[split],
                     min_length=self.min_length,
@@ -88,9 +82,10 @@ class MultiDigitMNIST(BaseDataModule):
                     padding_index=self.padding_index,
                 )
                 images, labels = image_generator.generate(self.num_samples[split])
+                import ipdb; ipdb.set_trace()
                 f.create_dataset(f"X_{split}", data=images, dtype="f4", compression="lzf")
                 f.create_dataset(f"y_{split}", data=labels, dtype="i1", compression="lzf")
-        logging.info(f"Dataset saved to {str(self.dataset_filename)}")
+        print(f"Dataset saved to {str(self.dataset_filename)}")
 
     def setup(self, stage: Optional[str] = None):
         if stage in ("fit", None):

@@ -1,1 +1,1 @@
-from .ctc import CTCLitModel
+from .ctc import CTCLitModel, digit_list_to_number

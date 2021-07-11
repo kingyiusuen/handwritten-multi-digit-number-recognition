@@ -22,7 +22,7 @@ callbacks:
     mode: "min"
     monitor: "val/loss"
 
-datamodule:
+data:
   batch_size: 32
   num_workers: 0
   pin_memory: false

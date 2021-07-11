@@ -1,9 +1,8 @@
 import itertools
-from typing import List, Union
+from typing import Iterable, Tuple, Union
 
 import torch
 import torch.nn as nn
-import wandb
 from pytorch_lightning import LightningModule
 from torchmetrics import Accuracy
 
@@ -15,15 +14,20 @@ def first_element(x: torch.Tensor, element: Union[int, float], dim: int = 1) -> 
     """
     Return indices of first occurence of element in x. If not found, return length of x along dim.
     Based on https://discuss.pytorch.org/t/first-nonzero-index/24769/9
+
     Examples
     --------
     >>> first_element(torch.tensor([[1, 2, 3], [2, 3, 3], [1, 1, 1]]), 3)
     tensor([2, 1, 3])
     """
-    nonz = x == element
-    ind = ((nonz.cumsum(dim) == 1) & nonz).max(dim).indices
-    ind[ind == 0] = x.shape[dim]
-    return ind
+    mask = x == element
+    found, indices = ((mask.cumsum(dim) == 1) & mask).max(dim)
+    indices[(~found) & (indices == 0)] = x.shape[dim]
+    return indices
+
+
+def digit_list_to_number(lst: Iterable) -> str:
+    return "".join(str(i) for i in lst)
 
 
 class CTCLitModel(LightningModule):
@@ -65,13 +69,12 @@ class CTCLitModel(LightningModule):
             }
         }
 
-    def forward(self, x: torch.Tensor, max_length: int = 10) -> List[List[int]]:
+    def forward(self, x: torch.Tensor, max_length: int = 10) -> Tuple:
         logits = self.model(x)
         logprobs = torch.log_softmax(logits, dim=1)
         decoded = self.greedy_decode(logprobs, max_length=max_length)
         pred_lengths = first_element(decoded, self.hparams.padding_index)
-        pred_nums = [num[:pred_length]for num, pred_length in zip(decoded.tolist(), pred_lengths)]
-        return pred_nums
+        return decoded, pred_lengths
 
     def training_step(self, batch, batch_idx):
         x, y = batch
@@ -103,12 +106,6 @@ class CTCLitModel(LightningModule):
         self.log("val/acc", self.val_acc, on_step=False, on_epoch=True)
         self.val_cer(decoded, y)
         self.log("val/cer", self.val_cer, on_step=False, on_epoch=True, prog_bar=True)
-        try:
-            pred_length = first_element(decoded[0], self.hparams.padding_index, dim=0).type_as(y)
-            pred_num = "".join(decoded[0].tolist()[:pred_length])
-            self.logger.experiment.log({"val/pred_examples": [wandb.Image(x[0], caption=pred_num)]})
-        except AttributeError:
-            pass
 
     def test_step(self, batch, batch_idx):
         x, y = batch
@@ -119,12 +116,6 @@ class CTCLitModel(LightningModule):
         self.log("test/acc", self.test_acc, on_step=False, on_epoch=True)
         self.test_cer(decoded, y)
         self.log("test/cer", self.test_cer, on_step=False, on_epoch=True, prog_bar=True)
-        try:
-            pred_length = first_element(decoded[0], self.hparams.padding_index, dim=0).type_as(y)
-            pred_num = "".join(decoded[0].tolist()[:pred_length])
-            self.logger.experiment.log({"test/pred_examples": [wandb.Image(x[0], caption=pred_num)]})
-        except AttributeError:
-            pass
 
     def greedy_decode(self, logprobs: torch.Tensor, max_length: int) -> torch.Tensor:
         B = logprobs.shape[0]

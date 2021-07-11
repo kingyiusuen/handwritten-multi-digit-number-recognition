@@ -6,7 +6,7 @@ import torchvision.transforms as transforms
 from PIL import Image
 
 from . import utils
-from .lit_models import CTCLitModel
+from .lit_models import CTCLitModel, digit_list_to_number
 
 
 MODEL_CKPT_FILENAME = Path(__file__).resolve().parents[1] / "artifacts" / "model.pt"
@@ -26,5 +26,9 @@ class Recognizer:
         else:
             image_pil = utils.read_image_pil(image, grayscale=True)
         image_tensor = self.transform(image_pil)
-        pred_num = self.scripted_model(image_tensor.unsqueeze(0))[0]
+        decoded, pred_lengths = self.scriptet_model(image_tensor.unsqueeze(0))
+        digit_lists = decoded[0][:pred_lengths[0]]
+        if not digit_lists:
+            return "None"
+        pred_num = digit_list_to_number(digit_lists)
         return pred_num
