@@ -18,18 +18,16 @@ class MultiDigitMNIST(BaseDataModule):
         num_train: int = 1000,
         num_val: int = 200,
         num_test: int = 200,
-        min_length: int = 1,
         max_length: int = 5,
         min_overlap: float = 0.0,
         max_overlap: float = 0.5,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        assert 0 < min_length < max_length
+        assert 1 <= max_length
         assert 0 <= min_overlap < max_overlap
 
         self.num_samples = {"train": num_train, "val": num_val, "test": num_test}
-        self.min_length = min_length
         self.max_length = max_length
         self.min_overlap = min_overlap
         self.max_overlap = max_overlap
@@ -41,7 +39,7 @@ class MultiDigitMNIST(BaseDataModule):
             "train": transforms.Compose([
                 transforms.RandomAffine(
                     degrees=(-0.05, 0.05),
-                    scale=(0.7, 1.0),
+                    scale=(0.7, 1.1),
                     shear=(-30, 30),
                     interpolation=InterpolationMode.BILINEAR,
                     fill=0,
@@ -75,14 +73,12 @@ class MultiDigitMNIST(BaseDataModule):
                 print(f"Preparing {split} dataset...")
                 image_generator = DatasetGenerator(
                     self.single_digit_mnist.dataset[split],
-                    min_length=self.min_length,
                     max_length=self.max_length,
                     min_overlap=self.min_overlap,
                     max_overlap=self.max_overlap,
                     padding_index=self.padding_index,
                 )
                 images, labels = image_generator.generate(self.num_samples[split])
-                import ipdb; ipdb.set_trace()
                 f.create_dataset(f"X_{split}", data=images, dtype="f4", compression="lzf")
                 f.create_dataset(f"y_{split}", data=labels, dtype="i1", compression="lzf")
         print(f"Dataset saved to {str(self.dataset_filename)}")

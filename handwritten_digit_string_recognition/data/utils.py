@@ -35,14 +35,12 @@ class DatasetGenerator:
     def __init__(
         self,
         single_digit_mnist,
-        min_length,
         max_length,
         min_overlap,
         max_overlap,
         padding_index,
     ):
         self.single_digit_mnist = single_digit_mnist
-        self.min_length = min_length
         self.max_length = max_length
         self.min_overlap = min_overlap
         self.max_overlap = max_overlap
@@ -64,14 +62,18 @@ class DatasetGenerator:
         labels = torch.full((num_samples, self.max_length), self.padding_index)
         images = torch.zeros((num_samples, 32, self.mnist_digit_dim * self.max_length))
         for i in range(num_samples):
-            rand_num = random.randint(
-                int("1" + "0" * (self.min_length - 1)),
-                int("1" + "0" * self.max_length) - 1
-            )
+            rand_num = self.get_random_number()
             for j, digit in enumerate(str(rand_num)):
                 labels[i, j] = int(digit)
             images[i] = self.construct_image_from_number(rand_num)
         return images, labels
+    
+    def get_random_number(self):
+        num_digits_choices = list(range(1, self.max_length + 1))
+        probs = [n / sum(num_digits_choices) for n in num_digits_choices]
+        num_digits = random.choices(num_digits_choices, weights=probs)[0]
+        rand_num = random.randint(int("1" + "0" * (num_digits - 1)), int("1" + "0" * num_digits) - 1)
+        return rand_num
 
     def construct_image_from_number(self, number):
         """Concatenate images of single digits."""
@@ -83,6 +85,7 @@ class DatasetGenerator:
         multi_digit_image = torch.zeros((32, self.mnist_digit_dim * self.max_length))
         for digit in digits:
             digit_image = random.choice(self.samples_by_digit[digit])
+            digit_image = torch.clone(digit_image)
             digit_image[:, :overlap_width] = torch.maximum(
                 multi_digit_image[y:y+self.mnist_digit_dim, x:x+overlap_width],
                 digit_image[:, :overlap_width]
@@ -92,7 +95,7 @@ class DatasetGenerator:
         return multi_digit_image
     
     def add_left_and_right_paddings(self, number: int) -> List[int]:
-        """Add white spaces to left and right of the number."""
+        """Add paddings to left and right of the number."""
         digits = list(str(number))
         digits = [int(digit) for digit in digits]
         remanining_length = self.max_length - len(digits)
