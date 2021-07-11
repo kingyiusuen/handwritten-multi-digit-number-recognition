@@ -50,6 +50,8 @@ class MultiDigitMNIST(BaseDataModule):
                     interpolation=InterpolationMode.BILINEAR,
                     fill=0,
                 ),
+                transforms.ColorJitter(brightness=(0.5, 1)),
+                transforms.RandomAdjustSharpness(sharpness_factor=3, p=0.3),
                 transforms.ToTensor(),
             ]),
             "val/test": transforms.ToTensor(),

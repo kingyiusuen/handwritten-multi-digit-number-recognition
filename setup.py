@@ -16,6 +16,12 @@ test_packages = [
 ]
 
 dev_packages = [
+    "awslambdaric==1.2.0",
+    "h5py==3.3.0",
+    "hydra-core==1.1.0",
+    "matplotlib==3.4.2",
+    "streamlit==0.83.0",
+    "streamlit-drawable-canvas==0.8.0",
     "black==21.5b1",
     "flake8==3.9.2",
     "isort==5.8.0",

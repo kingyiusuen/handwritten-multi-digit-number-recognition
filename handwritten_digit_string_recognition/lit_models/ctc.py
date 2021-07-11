@@ -1,8 +1,9 @@
 import itertools
-from typing import Union
+from typing import List, Union
 
 import torch
 import torch.nn as nn
+import wandb
 from pytorch_lightning import LightningModule
 from torchmetrics import Accuracy
 
@@ -64,12 +65,17 @@ class CTCLitModel(LightningModule):
             }
         }
 
-    def forward(self, x: torch.Tensor):
-        return self.model(x)
+    def forward(self, x: torch.Tensor, max_length: int = 10) -> List[List[int]]:
+        logits = self.model(x)
+        logprobs = torch.log_softmax(logits, dim=1)
+        decoded = self.greedy_decode(logprobs, max_length=max_length)
+        pred_lengths = first_element(decoded, self.hparams.padding_index)
+        pred_nums = [num[:pred_length]for num, pred_length in zip(decoded.tolist(), pred_lengths)]
+        return pred_nums
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        logits = self(x)
+        logits = self.model(x)
         logprobs = torch.log_softmax(logits, dim=1)
         B, _, S = logprobs.shape
 
@@ -82,7 +88,7 @@ class CTCLitModel(LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        logits = self(x)
+        logits = self.model(x)
         logprobs = torch.log_softmax(logits, dim=1)
         B, _, S = logprobs.shape
 
@@ -92,21 +98,33 @@ class CTCLitModel(LightningModule):
         loss = self.loss_fn(logprobs_for_loss, y, input_lengths, target_lengths)
         self.log("val/loss", loss, prog_bar=True)
 
-        decoded = self.greedy_decode(logprobs, max_length=y.shape[1])
+        decoded = self.greedy_decode(logprobs, max_length=y.shape[1])  # (B, max_length)
         self.val_acc(decoded, y)
         self.log("val/acc", self.val_acc, on_step=False, on_epoch=True)
         self.val_cer(decoded, y)
         self.log("val/cer", self.val_cer, on_step=False, on_epoch=True, prog_bar=True)
+        try:
+            pred_length = first_element(decoded[0], self.hparams.padding_index, dim=0).type_as(y)
+            pred_num = "".join(decoded[0].tolist()[:pred_length])
+            self.logger.experiment.log({"val/pred_examples": [wandb.Image(x[0], caption=pred_num)]})
+        except AttributeError:
+            pass
 
     def test_step(self, batch, batch_idx):
         x, y = batch
-        logits = self(x)
+        logits = self.model(x)
         logprobs = torch.log_softmax(logits, dim=1)
         decoded = self.greedy_decode(logprobs, max_length=y.shape[1])
         self.test_acc(decoded, y)
         self.log("test/acc", self.test_acc, on_step=False, on_epoch=True)
         self.test_cer(decoded, y)
         self.log("test/cer", self.test_cer, on_step=False, on_epoch=True, prog_bar=True)
+        try:
+            pred_length = first_element(decoded[0], self.hparams.padding_index, dim=0).type_as(y)
+            pred_num = "".join(decoded[0].tolist()[:pred_length])
+            self.logger.experiment.log({"test/pred_examples": [wandb.Image(x[0], caption=pred_num)]})
+        except AttributeError:
+            pass
 
     def greedy_decode(self, logprobs: torch.Tensor, max_length: int) -> torch.Tensor:
         B = logprobs.shape[0]
