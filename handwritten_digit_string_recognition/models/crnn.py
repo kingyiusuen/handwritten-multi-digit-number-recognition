@@ -3,6 +3,12 @@ import torch.nn as nn
 
 
 class CRNN(nn.Module):
+    """CRNN model proposed in Shi, Bai & Yao (2015).
+
+    Reference:
+    https://arxiv.org/pdf/1507.05717.pdf
+    """
+
     def __init__(self) -> None:
         super().__init__()
         self.cnn = nn.Sequential(
@@ -31,6 +37,14 @@ class CRNN(nn.Module):
         self.fc = nn.Linear(256, 12)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass.
+
+        Args:
+            x: (B, 1, H_, W_). Input image.
+
+        Returns:
+            (B, num_classes, S). Logits.
+        """
         x = self.cnn(x)  # (B, C, H, W)
         B, C, H, W = x.size()
         S = H * W

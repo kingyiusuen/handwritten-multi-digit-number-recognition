@@ -20,7 +20,9 @@ def download_checkpoint(run_path: str) -> None:
     api = wandb.Api()
     wandb_run = api.run(f"{run_path}")
 
-    checkpoint_wandb_files = [file for file in wandb_run.files() if file.name.endswith("ckpt")]
+    checkpoint_wandb_files = [
+        file for file in wandb_run.files() if file.name.endswith("ckpt")
+    ]
 
     if not checkpoint_wandb_files:
         print("Model checkpoint not found.")

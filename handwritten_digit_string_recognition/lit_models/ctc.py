@@ -1,5 +1,5 @@
 import itertools
-from typing import Iterable, Tuple, Union
+from typing import Union
 
 import torch
 import torch.nn as nn
@@ -10,15 +10,31 @@ from ..models import CRNN
 from .metrics import CharacterErrorRate
 
 
-def first_element(x: torch.Tensor, element: Union[int, float], dim: int = 1) -> torch.Tensor:
-    """
-    Return indices of first occurence of element in x. If not found, return length of x along dim.
-    Based on https://discuss.pytorch.org/t/first-nonzero-index/24769/9
+def first_element(
+    x: torch.Tensor,
+    element: Union[int, float],
+    dim: int = 1,
+) -> torch.Tensor:
+    """Find the first occurence of element in x along a given dimension.
 
-    Examples
-    --------
-    >>> first_element(torch.tensor([[1, 2, 3], [2, 3, 3], [1, 1, 1]]), 3)
-    tensor([2, 1, 3])
+    Args:
+        x: The input tensor to be searched.
+        element: The number to look for.
+        dim: The dimension to reduce.
+
+    Returns:
+        Indices of the first occurence of the element in x. If not found, return the
+        length of x along dim.
+
+    Usage:
+        >>> first_element(torch.tensor([[1, 2, 3], [2, 3, 3], [1, 1, 1]]), 3)
+        tensor([2, 1, 3])
+
+    Reference:
+        https://discuss.pytorch.org/t/first-nonzero-index/24769/9
+
+        I fixed an edge case where the element we are looking for is at index 0. The
+        original algorithm will return the length of x instead of 0.
     """
     mask = x == element
     found, indices = ((mask.cumsum(dim) == 1) & mask).max(dim)
@@ -26,11 +42,12 @@ def first_element(x: torch.Tensor, element: Union[int, float], dim: int = 1) -> 
     return indices
 
 
-def digit_list_to_number(lst: Iterable) -> str:
-    return "".join(str(i) for i in lst)
-
-
 class CTCLitModel(LightningModule):
+    """A LightningModule for CTC loss.
+
+    Reference:
+        https://github.com/full-stack-deep-learning/fsdl-text-recognizer-2021-labs/blob/main/lab9/text_recognizer/lit_models/ctc.py
+    """
     def __init__(
         self,
         padding_index: int,
@@ -66,10 +83,10 @@ class CTCLitModel(LightningModule):
                 "monitor": self.hparams.monitor,
                 "interval": "epoch",
                 "frequency": 1,
-            }
+            },
         }
 
-    def forward(self, x: torch.Tensor, max_length: int = 10) -> Tuple:
+    def forward(self, x: torch.Tensor, max_length: int = 10):
         logits = self.model(x)
         logprobs = torch.log_softmax(logits, dim=1)
         decoded = self.greedy_decode(logprobs, max_length=max_length)
@@ -96,8 +113,12 @@ class CTCLitModel(LightningModule):
         B, _, S = logprobs.shape
 
         logprobs_for_loss = logprobs.permute(2, 0, 1)  # (S, B, C)
-        input_lengths = torch.ones(B).type_as(logprobs_for_loss).int() * S  # All are max sequence length
-        target_lengths = first_element(y, self.hparams.padding_index).type_as(y)  # Length is up to first padding token
+        input_lengths = (
+            torch.ones(B).type_as(logprobs_for_loss).int() * S
+        )  # All are max sequence length
+        target_lengths = first_element(y, self.hparams.padding_index).type_as(
+            y
+        )  # Length is up to first padding token
         loss = self.loss_fn(logprobs_for_loss, y, input_lengths, target_lengths)
         self.log("val/loss", loss, prog_bar=True)
 
@@ -120,9 +141,16 @@ class CTCLitModel(LightningModule):
     def greedy_decode(self, logprobs: torch.Tensor, max_length: int) -> torch.Tensor:
         B = logprobs.shape[0]
         argmax = logprobs.argmax(1)
-        decoded = torch.ones((B, max_length)).type_as(logprobs).int() * self.hparams.padding_index
+        decoded = (
+            torch.ones((B, max_length)).type_as(logprobs).int()
+            * self.hparams.padding_index
+        )
         for i in range(B):
-            seq = [b for b, _ in itertools.groupby(argmax[i].tolist()) if b != self.hparams.blank_index][:max_length]
+            seq = [
+                b
+                for b, _ in itertools.groupby(argmax[i].tolist())
+                if b != self.hparams.blank_index
+            ][:max_length]
             for ii, char in enumerate(seq):
                 decoded[i, ii] = char
         return decoded

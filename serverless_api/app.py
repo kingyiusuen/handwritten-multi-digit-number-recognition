@@ -10,10 +10,12 @@ model = Recognizer()
 
 
 def lambda_handler(event, context):
-    image = _load_image(event)
-    pred_num = model.predict(image)
-    image_stat = ImageStat.Stat(image)
+    pil_image = _load_image(event)
+    pred_num = model.predict(pil_image)
+    image_stat = ImageStat.Stat(pil_image)
     print(f"METRIC image_mean_intensity {image_stat.mean[0]}")
+    print(f"METRIC image_width {pil_image.width}")
+    print(f"METRIC image_height {pil_image.height}")
     print(f"INFO pred {pred_num}")
     return {
         "message": HTTPStatus.OK.phrase,

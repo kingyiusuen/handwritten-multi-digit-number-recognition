@@ -1,12 +1,13 @@
 import base64
 import json
-import requests
 from io import BytesIO
 
 import numpy as np
-import streamlit as st
-from streamlit_drawable_canvas import st_canvas
+import requests
 from PIL import Image
+from streamlit_drawable_canvas import st_canvas
+
+import streamlit as st
 
 
 IMAGE_SCALE_FACTOR = 4
@@ -16,7 +17,9 @@ def convert_image_to_b64(canvas_image):
     image_pil = Image.fromarray(canvas_image.astype(np.uint8))
     image_pil = image_pil.convert("L")
     width, height = image_pil.size
-    image_pil = image_pil.resize((width // IMAGE_SCALE_FACTOR, height // IMAGE_SCALE_FACTOR))
+    image_pil = image_pil.resize(
+        (width // IMAGE_SCALE_FACTOR, height // IMAGE_SCALE_FACTOR)
+    )
     image_file = BytesIO()
     image_pil.save(image_file, "png")
     image_file.seek(0)
@@ -27,7 +30,7 @@ def convert_image_to_b64(canvas_image):
 
 
 def get_prediction(b64_string):
-    url = "http://localhost:9000/2015-03-31/functions/function/invocations"
+    url = "http://localhost:5000/predict"
     headers = {"Content-type": "application/json"}
     data = json.dumps({"image": f"data:image/png;base64,{b64_string}"})
     response = requests.post(url, data=data, headers=headers)
@@ -60,5 +63,4 @@ if st.button("Submit"):
             b64_string = convert_image_to_b64(canvas_result.image_data)
             response = get_prediction(b64_string)
             prediction = response.json()["data"]["prediction"]
-            st.header("Output")
-            st.text(prediction)
+            st.write(f"Prediction: {prediction}")

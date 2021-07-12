@@ -29,7 +29,6 @@ data:
   num_train: 1000
   num_val: 200
   num_test: 200
-  min_length: 1
   max_length: 5
   min_overlap: 0.0
   max_overlap: 0.4

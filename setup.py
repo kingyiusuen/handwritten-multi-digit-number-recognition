@@ -9,20 +9,24 @@ BASE_DIR = Path(__file__).parent
 with open(BASE_DIR / "requirements.txt") as file:
     required_packages = [ln.strip() for ln in file.readlines()]
 
+
 test_packages = [
     "pytest==6.1.1",
     "pytest-cov==2.12.0",
     "sh==1.14.2",
 ]
 
+
 dev_packages = [
     "awslambdaric==1.2.0",
+    "fastapi==0.66.0",
     "h5py==3.3.0",
     "hydra-core==1.1.0",
     "matplotlib==3.4.2",
     "streamlit==0.83.0",
     "streamlit-drawable-canvas==0.8.0",
     "wandb==0.10.33",
+    "uvicorn==0.14.0",
     "black==21.5b1",
     "flake8==3.9.2",
     "isort==5.8.0",
@@ -31,12 +35,6 @@ dev_packages = [
     "pydocstyle==6.1.1",
 ]
 
-docs_packages = [
-    "mkdocs==1.2.1",
-    "mkdocs-macros-plugin==0.5.12",
-    "mkdocs-material==7.1.9",
-    "mkdocstrings==0.15.2",
-]
 
 setup(
     name="handwritten-digit-string-recognition",
@@ -62,8 +60,7 @@ setup(
     python_requires=">=3.6",
     install_requires=[required_packages],
     extras_require={
-        "dev": test_packages + dev_packages + docs_packages,
-        "docs": docs_packages,
+        "dev": test_packages + dev_packages,
         "test": test_packages,
     },
 )

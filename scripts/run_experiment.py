@@ -1,17 +1,17 @@
+from argparse import Namespace
 from typing import List, Optional
 
 import hydra
-from argparse import Namespace
 from omegaconf import DictConfig
 from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks import Callback, ModelCheckpoint, EarlyStopping
+from pytorch_lightning.callbacks import Callback, EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers.wandb import WandbLogger
 
 from handwritten_digit_string_recognition.data import MultiDigitMNIST
 from handwritten_digit_string_recognition.lit_models import CTCLitModel
 
 
-@hydra.main(config_path="../conf", config_name="default")
+@hydra.main(config_path="../", config_name="config")
 def main(cfg: DictConfig):
     datamodule = MultiDigitMNIST(**cfg.data)
     datamodule.prepare_data()
