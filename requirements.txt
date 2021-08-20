@@ -1,4 +1,6 @@
+torch==1.9.0
 pytorch-lightning==1.3.8
 torchvision==0.10.0
-editdistance==0.5.3
 smart-open==5.1.0
+streamlit==0.86.0
+streamlit_drawable_canvas==0.8.0

@@ -35,13 +35,13 @@ dev_packages = [
 
 
 setup(
-    name="handwritten-digit-string-recognition",
+    name="handwritten-multi-digit-number-recognition",
     version="0.1.0",
     license="MIT",
-    description="Recognize handwritten digit strings.",
+    description="Recognize handwritten multi-digit numbers.",
     author="King Yiu Suen",
     author_email="kingyiusuen@gmail.com",
-    url="https://github.com/kingyiusuen/handwritten-digit-string-recognition/",
+    url="https://github.com/kingyiusuen/handwritten-multi-digit-number-recognition/",
     keywords=[
         "machine-learning",
         "deep-learning",

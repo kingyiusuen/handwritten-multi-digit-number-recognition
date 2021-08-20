@@ -48,6 +48,7 @@ class CTCLitModel(LightningModule):
     Reference:
         https://github.com/full-stack-deep-learning/fsdl-text-recognizer-2021-labs/blob/main/lab9/text_recognizer/lit_models/ctc.py
     """
+
     def __init__(
         self,
         padding_index: int,
