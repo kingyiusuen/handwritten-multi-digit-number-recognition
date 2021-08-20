@@ -43,8 +43,8 @@ def get_prediction(b64_string):
 
 
 def main():
-    st.set_page_config(page_title="Handwritten Digit String Recognizer")
-    st.title("Handwritten Digit String Recognizer")
+    st.set_page_config(page_title="Handwritten Multi-Digit Number Recognizer")
+    st.title("Handwritten Multi-Digit Number Recognizer")
 
     st.write("Draw some numbers:")
     canvas_result = st_canvas(

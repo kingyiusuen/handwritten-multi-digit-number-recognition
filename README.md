@@ -1,4 +1,4 @@
-# Handwritten Digit String Recognition
+# Handwritten Multi-Digit Number Recognition
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/kingyiusuen/handwritten-multi-digit-number-recognition/streamlit/app.py)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
