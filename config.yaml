@@ -46,4 +46,4 @@ lit_model:
   blank_index: ???
 
 logger:
-  project: "handwritten-digit-string-recognition"
+  project: "handwritten-multi-digit-number-recognition"
