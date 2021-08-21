@@ -4,3 +4,4 @@ torchvision==0.10.0
 smart-open==5.1.0
 streamlit==0.86.0
 streamlit_drawable_canvas==0.8.0
+matplotlib==3.4.3
